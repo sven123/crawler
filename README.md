@@ -1,9 +1,11 @@
 = Scraper an excercise
-
 == Install
 
 pip install .
 
+== Use
+
+crawler --help
 
 == Test
 
