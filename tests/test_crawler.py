@@ -11,7 +11,10 @@ class CrawlertTest(TestCase):
     def setUp(self):
         self.mock_handler = Mock()
         self.mock_http = AsyncMock()
-        self.crawler = Crawler(self.mock_http, self.mock_handler)
+        self.mock_robots_agent = Mock()
+        self.crawler = Crawler(
+            self.mock_robots_agent, self.mock_http, self.mock_handler
+        )
 
     @vcr.use_cassette("fixtures/vcr_cassettes/links.yml")
     def test_scrape_links(self):
@@ -24,8 +27,10 @@ class CrawlertTest(TestCase):
     @patch.object(Crawler, "scrape_links")
     async def test_crawl(self, mock_scrape_links):
         self.mock_handler.should_crawl.return_value = True
+        self.mock_robots_agent.allowed.return_value = True
         sample = "/"
         result = await self.crawler.crawl(sample)
+        self.mock_robots_agent.allowed.assert_called_once_with(sample)
         self.mock_http.get.assert_called_with(f"{self.mock_handler.url}{sample}")
         self.assertTrue(sample in self.crawler.already_crawled)
         self.assertEqual(result, mock_scrape_links())
@@ -42,6 +47,15 @@ class CrawlertTest(TestCase):
     async def test_crawl_already_crawled(self):
         self.crawler.already_crawled.add("/")
         result = await self.crawler.crawl("/")
+        self.mock_http.get.assert_not_called()
+        self.assertEqual(result, [])
+
+    async def test_crawl_robots_agent_not_allowed(self):
+        self.mock_handler.should_crawl.return_value = True
+        self.mock_robots_agent.allowed.return_value = False
+        sample = "/"
+        result = await self.crawler.crawl(sample)
+        self.mock_robots_agent.allowed.assert_called_once_with(sample)
         self.mock_http.get.assert_not_called()
         self.assertEqual(result, [])
 
