@@ -1,13 +1,16 @@
-= Scraper an excercise
-== Install
+# Crawler an excercise
+
+crawler finds all links on a site and based on rules explores and and interprets data
+
+## Install
 
 pip install .
 
-== Use
+## Use
 
 crawler --help
 
-== Test
+## Test
 
 pip install -r test_requirements.txt
 pytest tests
