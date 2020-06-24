@@ -1,13 +1,13 @@
-= Scraper an excercise
-== Install
+# Scraper an excercise
+## Install
 
 pip install .
 
-== Use
+## Use
 
 crawler --help
 
-== Test
+## Test
 
 pip install -r test_requirements.txt
 pytest tests
