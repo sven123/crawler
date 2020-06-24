@@ -1,14 +1,16 @@
-from unittest import TestCase
-from unittest.mock import Mock, patch
+import asyncio
+from aiounittest import AsyncTestCase as TestCase
+from unittest.mock import Mock, AsyncMock, patch
 import vcr
 from crawler.crawler import Crawler, NO_HANDLER
+
 import requests
 
 
 class CrawlertTest(TestCase):
     def setUp(self):
         self.mock_handler = Mock()
-        self.mock_http = Mock()
+        self.mock_http = AsyncMock()
         self.crawler = Crawler(self.mock_http, self.mock_handler)
 
     @vcr.use_cassette("fixtures/vcr_cassettes/links.yml")
@@ -20,36 +22,36 @@ class CrawlertTest(TestCase):
         self.assertEqual(links[-1], "/personvern/")
 
     @patch.object(Crawler, "scrape_links")
-    def test_crawl(self, mock_scrape_links):
+    async def test_crawl(self, mock_scrape_links):
         self.mock_handler.should_crawl.return_value = True
         sample = "/"
-        result = self.crawler.crawl(sample)
+        result = await self.crawler.crawl(sample)
         self.mock_http.get.assert_called_with(f"{self.mock_handler.url}{sample}")
         self.assertTrue(sample in self.crawler.already_crawled)
         self.assertEqual(result, mock_scrape_links())
 
-    def test_crawl_should_not_crawl(self):
+    async def test_crawl_should_not_crawl(self):
         self.mock_handler.should_crawl.return_value = False
         self.mock_handler.handler.return_value = NO_HANDLER
         sample = "/static/image"
-        result = self.crawler.crawl(sample)
+        result = await self.crawler.crawl(sample)
         self.mock_http.get.assert_not_called()
         self.assertTrue(sample in self.crawler.already_crawled)
         self.assertEqual(result, [])
 
-    def test_crawl_already_crawled(self):
+    async def test_crawl_already_crawled(self):
         self.crawler.already_crawled.add("/")
-        result = self.crawler.crawl("/")
+        result = await self.crawler.crawl("/")
         self.mock_http.get.assert_not_called()
         self.assertEqual(result, [])
 
-    def test_crawl_with_handler(self):
+    async def test_crawl_with_handler(self):
         mock_handler = Mock()
         self.mock_handler.should_crawl.return_value = False
         self.mock_handler.handler.return_value = mock_handler
 
         sample = "/produkter/1234-foo-bar/"
-        result = self.crawler.crawl(sample)
+        result = await self.crawler.crawl(sample)
 
         self.mock_handler.handler.assert_called_once_with(sample)
         self.mock_http.get.assert_called_with(f"{self.mock_handler.url}{sample}")

@@ -1,5 +1,5 @@
 import re
-from requests import get
+
 
 NO_HANDLER = object()
 
@@ -15,20 +15,20 @@ class Crawler:
     def scrape_links(self, text):
         return self.HREF_PATTERN.findall(text)
 
-    def crawl(self, link):
+    async def crawl(self, link):
         if link in self.already_crawled:
             return []
 
         self.already_crawled.add(link)
 
         if self.link_handlers.should_crawl(link):
-            response = self.http_client.get(f"{self.link_handlers.url}{link}")
+            response = await self.http_client.get(f"{self.link_handlers.url}{link}")
             return self.scrape_links(response.text)
         else:
             handler = self.link_handlers.handler(link)
             if handler is NO_HANDLER:
                 return []
 
-            response = self.http_client.get(f"{self.link_handlers.url}{link}")
+            response = await self.http_client.get(f"{self.link_handlers.url}{link}")
             handler(response.text)
             return []
