@@ -15,4 +15,9 @@ crawler --help
 pip install -r test_requirements.txt
 pytest tests
 
+## Issues / TODO
 
+* Does not respect robots.txt expiration
+* Does not respect robots.txt delay
+* Missing input validation
+* General cleanup an refactoring
